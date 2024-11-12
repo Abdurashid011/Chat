@@ -1,0 +1,70 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: chat_app
+        restart: unless-stopped
+        volumes:
+            - .:/var/www
+        networks:
+            - app-network
+        depends_on:
+            - postgres
+
+    postgres:
+        image: postgres
+        container_name: chat_postgres
+        restart: always
+        environment:
+            POSTGRES_DB: ${DB_DATABASE}
+            POSTGRES_USER: ${DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - app-network
+        ports:
+            - "5434:5432"  # Aniq port xaritasi qo'shildi
+
+    pgadmin:
+        image: dpage/pgadmin4
+        container_name: chat_pgadmin
+        restart: unless-stopped
+        environment:
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+        ports:
+            - "9091:80"  # Port xaritasi tuzatildi
+        networks:
+            - app-network
+
+    web:
+        container_name: chat_web
+        image: nginx:alpine
+        ports:
+            - "8020:80"  # 8008 porti o'rniga 8010 foydalanilyapti
+        volumes:
+            - .:/var/www
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - app
+        networks:
+            - app-network
+
+    node:
+        container_name: chat_node_new
+        image: node:20
+        working_dir: /var/www
+        volumes:
+            - .:/var/www
+        networks:
+            - app-network
+        command: bash -c "npm install && npm run build"
+
+volumes:
+    postgres_data:
+
+networks:
+    app-network:
+        driver: bridge
