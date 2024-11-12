@@ -16,7 +16,7 @@ class ChatController extends Controller
     {
         $authId = auth()->id();
         $users = User::query()->where('id', '!=', $authId)->get();
-        return view('chat', compact('users'));
+        return view('chat', ['users' => $users]);
     }
 
     public function show($userId): View|Factory|Application
@@ -27,10 +27,10 @@ class ChatController extends Controller
 
         $selectedUser = User::query()->findOrFail($userId);
 
-        $messages = Message::query()->where(function($query) use ($authId, $userId) {
+        $messages = Message::query()->where(function ($query) use ($authId, $userId) {
             $query->where('sender_id', $authId)
                 ->where('receiver_id', $userId);
-        })->orWhere(function($query) use ($authId, $userId) {
+        })->orWhere(function ($query) use ($authId, $userId) {
             $query->where('sender_id', $userId)
                 ->where('receiver_id', $authId);
         })->orderBy('created_at')->get();
@@ -51,7 +51,7 @@ class ChatController extends Controller
             'message' => 'required|string|max:1000',
         ]);
 
-        $messages =  Message::query()->create([
+        $messages = Message::query()->create([
             'sender_id' => $authId,
             'receiver_id' => $validated['receiver_id'],
             'message' => $validated['message'],
@@ -65,11 +65,11 @@ class ChatController extends Controller
         $authId = auth()->id();
 
         $messages = Message::query()
-            ->where(function($query) use ($authId, $userId) {
+            ->where(function ($query) use ($authId, $userId) {
                 $query->where('sender_id', $authId)
                     ->where('receiver_id', $userId);
             })
-            ->orWhere(function($query) use ($authId, $userId) {
+            ->orWhere(function ($query) use ($authId, $userId) {
                 $query->where('sender_id', $userId)
                     ->where('receiver_id', $authId);
             })
