@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ChatController extends Controller
@@ -42,7 +42,7 @@ class ChatController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): JsonResponse
     {
         $authId = auth()->id();
 
@@ -51,12 +51,32 @@ class ChatController extends Controller
             'message' => 'required|string|max:1000',
         ]);
 
-        Message::query()->create([
+        $messages =  Message::query()->create([
             'sender_id' => $authId,
             'receiver_id' => $validated['receiver_id'],
             'message' => $validated['message'],
         ]);
 
-        return redirect()->route('chat.show', $validated['receiver_id']);
+        return response()->json(['messages' => $messages]);
     }
+
+    public function getMessages($userId): JsonResponse
+    {
+        $authId = auth()->id();
+
+        $messages = Message::query()
+            ->where(function($query) use ($authId, $userId) {
+                $query->where('sender_id', $authId)
+                    ->where('receiver_id', $userId);
+            })
+            ->orWhere(function($query) use ($authId, $userId) {
+                $query->where('sender_id', $userId)
+                    ->where('receiver_id', $authId);
+            })
+            ->orderBy('created_at')
+            ->get();
+
+        return response()->json(['messages' => $messages]);
+    }
+
 }
