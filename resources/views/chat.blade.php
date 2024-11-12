@@ -8,12 +8,14 @@
 </head>
 <body class="bg-gradient-to-r from-purple-600 to-pink-500 font-sans flex h-screen">
 
-<div class="flex flex-row w-full h-full">
+<audio id="notificationSound" preload="auto">
+    <source src="/build/assets/sounds/notification_o14egLP.mp3" type="audio/mp3">
+</audio>
 
+<div class="flex flex-row w-full h-full">
     <div class="w-1/4 bg-white shadow-lg rounded-lg mx-4 my-4 p-5 flex flex-col">
         <h2 class="text-2xl font-semibold text-gray-800 mb-6">Foydalanuvchilar</h2>
         <div id="users" class="space-y-4 overflow-y-auto">
-            <?php global $users ?>
             <?php foreach ($users as $user): ?>
             <a href="javascript:void(0);" onclick="selectUser(<?= $user->id ?>)"
                class="block px-5 py-3 rounded-lg text-lg text-gray-800 hover:bg-indigo-500 hover:text-white transition-all
@@ -23,7 +25,6 @@
             <?php endforeach; ?>
         </div>
     </div>
-
 
     <div class="w-3/4 bg-gray-50 rounded-lg shadow-xl mx-4 my-4 p-6 flex flex-col">
         <h2 class="text-2xl font-semibold text-gray-700 mb-5">
@@ -50,10 +51,20 @@
         </form>
         <?php endif; ?>
     </div>
-
 </div>
 
 <script>
+    let lastMessageCount = 0;
+    const notificationSound = document.getElementById('notificationSound');
+
+    function playNotificationSound() {
+        notificationSound.play().catch(error => {
+            console.error('Audio playback error:', error);
+            // Agar audio faylni yuklab bo'lmasa yoki boshqa xatolik bo'lsa
+            console.log('Audio file path might be incorrect or file is missing');
+        });
+    }
+
     function sendMessage(event) {
         event.preventDefault();
         const messageInput = document.getElementById('message');
@@ -78,13 +89,20 @@
             .catch(error => console.error('Xato:', error));
     }
 
-
     function loadMessages() {
         const receiverId = document.getElementById('receiver_id').value;
         fetch(`/chat/messages/${receiverId}`)
             .then(response => response.json())
             .then(data => {
                 const messagesContainer = document.getElementById('messages');
+                const currentMessageCount = data.messages.length;
+
+                // Agar yangi xabar kelsa va bu birinchi yuklash bo'lmasa
+                if (lastMessageCount > 0 && currentMessageCount > lastMessageCount) {
+                    playNotificationSound();
+                }
+
+                lastMessageCount = currentMessageCount;
                 messagesContainer.innerHTML = '';
 
                 data.messages.forEach(message => {
@@ -94,14 +112,66 @@
                     messageElement.innerText = message.message;
                     messagesContainer.appendChild(messageElement);
                 });
+
+                // Auto-scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             })
             .catch(error => console.error('Xato:', error));
     }
+
     function selectUser(userId) {
         window.location.href = `/chat/${userId}`;
     }
 
+    // Initial load
+    loadMessages();
+    // Start polling
     setInterval(loadMessages, 1000);
+
+
+    if (Notification.permission === "default") {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                const notificationOptions = {
+                    body: "Sizga yangi habar bor",
+                    tag: "new-message"
+                }
+                let notification = new Notification("Yangi habar bor!!!!!!", notificationOptions);
+
+                notification.onclick = () => {
+                    window.open("https://example.com")
+                    notification.close()
+                };
+                notification.onclose = () => {
+                    console.log("Bildirishnoma yopildi!")
+                }
+            } else {
+                console.log("Bildirish nomalar rad etildi! Bilganingni qil Jetli")
+            }
+        })
+    }
+    if (Notification.permission === "default") {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                const notificationOptions = {
+                    body: "Sizga yangi habar bor",
+                    tag: "new-message"
+                }
+                let notification = new Notification("Yangi habar bor!!!!!!", notificationOptions);
+
+                notification.onclick = () => {
+                    window.open("https://example.com")
+                    notification.close()
+                };
+                notification.onclose = () => {
+                    console.log("Bildirishnoma yopildi!")
+                }
+            } else {
+                console.log("Bildirish nomalar rad etildi! Bilganingni qil Jetli")
+            }
+        })
+    }
+
 </script>
 
 </body>
