@@ -9,9 +9,7 @@
 </head>
 <body class="bg-gradient-to-r from-purple-600 to-pink-500 font-sans flex h-screen">
 
-<audio id="notificationSound" preload="auto">
-    <source src="{{ asset('build/assets/sounds/notification_o14egLP.mp3') }}" type="audio/mp3">
-</audio>
+<audio id="notificationSound" preload="auto" src="{{ asset('assets/notification_o14egLP.mp3') }}"></audio>
 
 <div class="flex flex-row w-full h-full">
     <!-- Foydalanuvchilar ro'yxati -->
@@ -128,13 +126,11 @@
         window.location.href = `{{ url('/chat') }}/${userId}`;
     }
 
-    // Xabarlarni yuklash va yangilash
     if (document.getElementById('receiver_id')) {
         loadMessages();
         setInterval(loadMessages, 1000);
     }
 
-    // Bildirishnomalar uchun ruxsat so'rash
     if (Notification.permission === "default") {
         Notification.requestPermission().then(permission => {
             if (permission === "granted") {
