@@ -24,7 +24,6 @@ class ChatController extends Controller
         $authId = auth()->id();
 
         $users = User::query()->where('id', '!=', $authId)->get();
-
         $selectedUser = User::query()->findOrFail($userId);
 
         $messages = Message::query()->where(function ($query) use ($authId, $userId) {
@@ -44,39 +43,32 @@ class ChatController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $authId = auth()->id();
-
         $validated = $request->validate([
             'receiver_id' => 'required|exists:users,id',
             'message' => 'required|string|max:1000',
         ]);
 
-        $messages = Message::query()->create([
-            'sender_id' => $authId,
+        $message = Message::query()->create([
+            'sender_id' => auth()->id(),
             'receiver_id' => $validated['receiver_id'],
             'message' => $validated['message'],
         ]);
 
-        return response()->json(['messages' => $messages]);
+        return response()->json(['message' => $message]);
     }
 
     public function getMessages($userId): JsonResponse
     {
         $authId = auth()->id();
 
-        $messages = Message::query()
-            ->where(function ($query) use ($authId, $userId) {
-                $query->where('sender_id', $authId)
-                    ->where('receiver_id', $userId);
-            })
-            ->orWhere(function ($query) use ($authId, $userId) {
-                $query->where('sender_id', $userId)
-                    ->where('receiver_id', $authId);
-            })
-            ->orderBy('created_at')
-            ->get();
+        $messages = Message::query()->where(function ($query) use ($authId, $userId) {
+            $query->where('sender_id', $authId)
+                ->where('receiver_id', $userId);
+        })->orWhere(function ($query) use ($authId, $userId) {
+            $query->where('sender_id', $userId)
+                ->where('receiver_id', $authId);
+        })->orderBy('created_at')->get();
 
         return response()->json(['messages' => $messages]);
     }
-
 }

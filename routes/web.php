@@ -10,8 +10,8 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
-    Route::get('/chat/messages/{user}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
-    Route::get('/chat{user}', [ChatController::class, 'show'])->name('chat.show');
+    Route::get('/chat/messages/{userId}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
+    Route::get('/chat/{userId}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/send', [ChatController::class, 'store'])->name('chat.send');
 });
 
